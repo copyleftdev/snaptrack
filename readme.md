@@ -1,3 +1,5 @@
+![Snaptrack Logo](./logo.png)
+
 # Snaptrack
 
 > **Snaptrack** is a site-snapshot and change-tracking tool. It captures the HTML of any given site (or set of pages), stores snapshots in a local SQLite database, and highlights differences between consecutive snapshots.
@@ -177,6 +179,3 @@ We welcome contributions! Please:
 
 Snaptrack is licensed under the [MIT License](./LICENSE). See the [LICENSE](./LICENSE) file for more info.
 
----
-
-That’s it! Now your **README** highlights **security** and **tester** use cases, showing how they benefit from the tool’s snapshot-based, diff-driven approach.
