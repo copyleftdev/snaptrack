@@ -2,10 +2,11 @@ package crawl
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
 	"sync"
 	"time"
+
+	"net/url"
 
 	"golang.org/x/net/html"
 
@@ -20,7 +21,7 @@ type CrawlerConfig struct {
 	Concurrency int
 }
 
-// CrawlDomain crawls all pages within the same FQDN as startURL, storing snapshots in db.
+// CrawlDomain crawls all pages under the same domain as startURL, storing snapshots in DB.
 func CrawlDomain(startURL string, db store.DBInterface, cfg CrawlerConfig) error {
 	parsed, err := url.Parse(startURL)
 	if err != nil {
@@ -46,26 +47,30 @@ func CrawlDomain(startURL string, db store.DBInterface, cfg CrawlerConfig) error
 		}
 
 		sem <- struct{}{}
+		start := time.Now()
+
+		// Call capture.CaptureHTML (which does raw HTTP) instead of "FetchRawHTML"
 		htmlContent, err := capture.CaptureHTML(u, 15*time.Second)
 		<-sem
 
 		if err != nil {
-			fmt.Printf("[ERROR] capturing %s: %v\n", u, err)
+			fmt.Printf("[ERROR] capturing %s (depth=%d) after %.2fs: %v\n",
+				u, depth, time.Since(start).Seconds(), err)
 			return
 		}
 
-		// Store or update snapshot
+		// Store snapshot
 		if err := snapshot.StoreOrUpdateSnapshot(db, u, htmlContent); err != nil {
 			fmt.Printf("[ERROR] storing snapshot for %s: %v\n", u, err)
 		}
 
+		// Extract same-domain links
 		links, parseErr := extractSameDomainLinks(htmlContent, baseDomain, u)
 		if parseErr != nil {
 			fmt.Printf("[ERROR] parsing links for %s: %v\n", u, parseErr)
 			return
 		}
 
-		// for each link, if not visited, schedule a crawl
 		for _, link := range links {
 			mu.Lock()
 			if !visited[link] {
@@ -80,7 +85,6 @@ func CrawlDomain(startURL string, db store.DBInterface, cfg CrawlerConfig) error
 		}
 	}
 
-	// Start
 	visited[startURL] = true
 	wg.Add(1)
 	go crawl(startURL, 0)
@@ -88,9 +92,11 @@ func CrawlDomain(startURL string, db store.DBInterface, cfg CrawlerConfig) error
 	return nil
 }
 
-// extractSameDomainLinks returns absolute URLs that stay under baseDomain.
+// extractSameDomainLinks uses golang.org/x/net/html to parse <a href=""> tags,
+// returning absolute URLs under baseDomain.
 func extractSameDomainLinks(htmlContent, baseDomain, currentURL string) ([]string, error) {
 	var links []string
+
 	doc, err := html.Parse(strings.NewReader(htmlContent))
 	if err != nil {
 		return links, fmt.Errorf("failed to parse HTML: %w", err)
@@ -101,9 +107,9 @@ func extractSameDomainLinks(htmlContent, baseDomain, currentURL string) ([]strin
 		if n.Type == html.ElementNode && n.Data == "a" {
 			for _, attr := range n.Attr {
 				if attr.Key == "href" {
-					abs, ok := makeAbsURL(currentURL, attr.Val)
-					if ok && strings.HasPrefix(abs, baseDomain) {
-						links = append(links, abs)
+					absURL, ok := makeAbsURL(currentURL, attr.Val)
+					if ok && strings.HasPrefix(absURL, baseDomain) {
+						links = append(links, absURL)
 					}
 					break
 				}
@@ -114,6 +120,7 @@ func extractSameDomainLinks(htmlContent, baseDomain, currentURL string) ([]strin
 		}
 	}
 	f(doc)
+
 	return links, nil
 }
 
