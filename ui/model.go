@@ -12,7 +12,6 @@ import (
 	"github.com/copyleftdev/snaptrack/pkg/store"
 )
 
-// Model holds TUI state.
 type Model struct {
 	db store.DBInterface
 
@@ -26,7 +25,6 @@ type Model struct {
 	height      int
 }
 
-// NewModel creates a TUI model with DB reference.
 func NewModel(db store.DBInterface) Model {
 	return Model{
 		db:   db,
@@ -34,13 +32,11 @@ func NewModel(db store.DBInterface) Model {
 	}
 }
 
-// Init is the initial command for Bubble Tea.
 func (m Model) Init() tea.Cmd {
-	// Load distinct URLs as an initial command
+
 	return loadURLsCmd(m.db)
 }
 
-// Update handles messages/events.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
@@ -119,12 +115,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// View delegates to our separate Render function in view.go
 func (m Model) View() string {
 	return Render(m)
 }
-
-// -------------- Internal Commands & Messages ---------------
 
 type loadURLsMsg struct {
 	urls []string
@@ -138,7 +131,6 @@ func loadURLsCmd(db store.DBInterface) tea.Cmd {
 	}
 }
 
-// diffMsg
 type diffMsg struct {
 	diffText string
 	err      error
@@ -160,7 +152,6 @@ func generateDiffCmd(db store.DBInterface, url string) tea.Cmd {
 	}
 }
 
-// checkMsg
 type checkMsg struct {
 	info string
 	err  error
@@ -168,11 +159,13 @@ type checkMsg struct {
 
 func recheckURLCmd(db store.DBInterface, url string) tea.Cmd {
 	return func() tea.Msg {
-		html, err := capture.CaptureHTML(url, 15*time.Second)
+
+		html, reqHeaders, respHeaders, statusCode, err := capture.CaptureHTML(url, 15*time.Second)
 		if err != nil {
 			return checkMsg{"", err}
 		}
-		err = snapshot.StoreOrUpdateSnapshot(db, url, html)
+
+		err = snapshot.StoreOrUpdateSnapshot(db, url, html, statusCode, reqHeaders, respHeaders)
 		if err != nil {
 			return checkMsg{"", err}
 		}
@@ -180,25 +173,18 @@ func recheckURLCmd(db store.DBInterface, url string) tea.Cmd {
 	}
 }
 
-// DB helper to retrieve distinct URLs from snapshots
 func getDistinctURLs(db store.DBInterface) ([]string, error) {
-	// Implement or adapt to your store if not existing:
-	// e.g. SELECT DISTINCT url FROM snapshots
-	// We'll do a quick placeholder:
+
 	type distinctURLoader interface {
 		GetDistinctURLs() ([]string, error)
 	}
 	if loader, ok := db.(distinctURLoader); ok {
 		return loader.GetDistinctURLs()
 	}
-	// fallback or error
 	return nil, fmt.Errorf("db does not implement GetDistinctURLs")
 }
 
-// DB helper to retrieve snapshots for a URL
 func getSnapshotsForURL(db store.DBInterface, url string) ([]snapshot.Snapshot, error) {
-	// Implement or adapt to your store if not existing:
-	// e.g. SELECT * FROM snapshots WHERE url=? ORDER BY created_at DESC
 	type snapshotsForURL interface {
 		GetSnapshotsForURL(string) ([]snapshot.Snapshot, error)
 	}

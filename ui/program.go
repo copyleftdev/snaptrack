@@ -7,7 +7,6 @@ import (
 	"github.com/copyleftdev/snaptrack/pkg/store"
 )
 
-// StartProgram creates and runs the Bubble Tea TUI using model.go
 func StartProgram(db store.DBInterface) error {
 	m := NewModel(db)
 	p := tea.NewProgram(m, tea.WithAltScreen())

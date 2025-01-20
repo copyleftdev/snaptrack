@@ -12,16 +12,15 @@ import (
 )
 
 func main() {
-	// 1) Init DB
+
 	db, err := store.InitDB("snapshots.db")
 	if err != nil {
 		log.Fatal("Failed to init DB:", err)
 	}
 	defer db.Close()
 
-	// Basic arg parsing
 	if len(os.Args) < 2 {
-		// No subcommand → maybe launch TUI
+
 		if err := ui.StartProgram(db); err != nil {
 			log.Fatal("TUI error:", err)
 		}
@@ -30,7 +29,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "crawl":
-		// Usage: snapstack crawl <url> [--max-depth=N]
+
 		if len(os.Args) < 3 {
 			fmt.Println("Usage: snapstack crawl <url> [--max-depth=N]")
 			return
@@ -38,7 +37,6 @@ func main() {
 		startURL := os.Args[2]
 		config := crawl.CrawlerConfig{MaxDepth: 3, Concurrency: 5}
 
-		// Optional parse for --max-depth
 		for i := 3; i < len(os.Args); i++ {
 			if os.Args[i] == "--max-depth" && i+1 < len(os.Args) {
 				md, err := strconv.Atoi(os.Args[i+1])
@@ -53,11 +51,11 @@ func main() {
 		}
 
 	case "check":
-		// Future single-page check logic, if you want
+
 		fmt.Println("Check not yet implemented.")
 
 	case "diff":
-		// Future diff logic
+
 		fmt.Println("Diff command not yet implemented.")
 
 	default:

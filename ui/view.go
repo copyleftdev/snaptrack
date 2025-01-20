@@ -7,7 +7,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// All styling in this file to avoid duplicates
 var (
 	titleStyle      = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
 	selectedStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("229")).Background(lipgloss.Color("57"))
@@ -20,14 +19,12 @@ var (
 	normalLineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("7"))
 )
 
-// Render is called by Model.View(). We build the TUI layout here.
 func Render(m Model) string {
-	// If no URLs are loaded and not loading, show fallback
+
 	if len(m.urls) == 0 && !m.loading {
 		return borderStyle.Render("No URLs found. Press 'q' to quit.")
 	}
 
-	// Left panel: list of URLs
 	var leftPanel strings.Builder
 	leftPanel.WriteString(titleStyle.Render("Tracked URLs\n\n"))
 	for i, url := range m.urls {
@@ -39,7 +36,6 @@ func Render(m Model) string {
 	}
 	leftView := borderStyle.Width(m.width/2 - 2).Render(leftPanel.String())
 
-	// Right panel
 	var rightPanel strings.Builder
 	if m.showDiff {
 		rightPanel.WriteString(titleStyle.Render("Diff View\n\n"))
@@ -55,10 +51,8 @@ func Render(m Model) string {
 	}
 	rightView := borderStyle.Width(m.width/2 - 2).Render(rightPanel.String())
 
-	// Combine horizontally
 	row := lipgloss.JoinHorizontal(lipgloss.Top, leftView, rightView)
 
-	// status message at bottom (errors, success, etc.)
 	statusBar := ""
 	if m.statusMsg != "" {
 		statusBar = "\n" + m.statusMsg

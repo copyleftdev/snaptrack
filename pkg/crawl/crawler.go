@@ -15,13 +15,12 @@ import (
 	"github.com/copyleftdev/snaptrack/pkg/store"
 )
 
-// CrawlerConfig holds settings for domain crawling.
 type CrawlerConfig struct {
 	MaxDepth    int
 	Concurrency int
 }
 
-// CrawlDomain crawls all pages under the same domain as startURL, storing snapshots in DB.
+// CrawlDomain uses raw HTTP capture. We pass the headers & status code to snapshot.StoreOrUpdateSnapshot.
 func CrawlDomain(startURL string, db store.DBInterface, cfg CrawlerConfig) error {
 	parsed, err := url.Parse(startURL)
 	if err != nil {
@@ -49,8 +48,7 @@ func CrawlDomain(startURL string, db store.DBInterface, cfg CrawlerConfig) error
 		sem <- struct{}{}
 		start := time.Now()
 
-		// Call capture.CaptureHTML (which does raw HTTP) instead of "FetchRawHTML"
-		htmlContent, err := capture.CaptureHTML(u, 15*time.Second)
+		htmlContent, reqHeaders, respHeaders, statusCode, err := capture.CaptureHTML(u, 15*time.Second)
 		<-sem
 
 		if err != nil {
@@ -59,12 +57,13 @@ func CrawlDomain(startURL string, db store.DBInterface, cfg CrawlerConfig) error
 			return
 		}
 
-		// Store snapshot
-		if err := snapshot.StoreOrUpdateSnapshot(db, u, htmlContent); err != nil {
-			fmt.Printf("[ERROR] storing snapshot for %s: %v\n", u, err)
+		// Store or update snapshot in DB with new data
+		snapErr := snapshot.StoreOrUpdateSnapshot(db, u, htmlContent, statusCode, reqHeaders, respHeaders)
+		if snapErr != nil {
+			fmt.Printf("[ERROR] storing snapshot for %s: %v\n", u, snapErr)
 		}
 
-		// Extract same-domain links
+		// extract same-domain links
 		links, parseErr := extractSameDomainLinks(htmlContent, baseDomain, u)
 		if parseErr != nil {
 			fmt.Printf("[ERROR] parsing links for %s: %v\n", u, parseErr)
@@ -92,8 +91,6 @@ func CrawlDomain(startURL string, db store.DBInterface, cfg CrawlerConfig) error
 	return nil
 }
 
-// extractSameDomainLinks uses golang.org/x/net/html to parse <a href=""> tags,
-// returning absolute URLs under baseDomain.
 func extractSameDomainLinks(htmlContent, baseDomain, currentURL string) ([]string, error) {
 	var links []string
 
@@ -120,7 +117,6 @@ func extractSameDomainLinks(htmlContent, baseDomain, currentURL string) ([]strin
 		}
 	}
 	f(doc)
-
 	return links, nil
 }
 

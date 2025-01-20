@@ -25,5 +25,6 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/sergi/go-diff v1.3.1
 	golang.org/x/net v0.34.0
-	golang.org/x/sys v0.29.0 // indirect
 )
+
+require golang.org/x/sys v0.29.0 // indirect

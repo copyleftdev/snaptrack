@@ -62,7 +62,7 @@ The tool can be run in **CLI mode** for batch usage (`crawl`, `check`, etc.) or 
 
 1. **Clone** this repository:
    ```bash
-   git clone https://github.com/copyleftdev/snaptrack.git
+   git clone https:
    ```
 2. **Change** to the directory:
    ```bash
@@ -99,7 +99,7 @@ Snaptrack can be invoked via CLI subcommands or launched in a TUI if no argument
 ### 1. Crawling a Domain
 
 ```bash
-./bin/snapstack crawl https://example.com --max-depth=2
+./bin/snapstack crawl https:
 ```
 
 - **Crawl** the specified domain (`example.com`) recursively up to 2 levels.  
@@ -109,12 +109,12 @@ Snaptrack can be invoked via CLI subcommands or launched in a TUI if no argument
 ### 2. Checking or Diffing a Single URL
 
 ```bash
-./bin/snapstack check https://example.com
+./bin/snapstack check https:
 ```
 *(If implemented—example usage. Checks a single page.)*
 
 ```bash
-./bin/snapstack diff https://example.com
+./bin/snapstack diff https:
 ```
 *(If implemented—example usage. Shows a unified diff for that page’s last two snapshots.)*
 
