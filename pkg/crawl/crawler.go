@@ -20,7 +20,6 @@ type CrawlerConfig struct {
 	Concurrency int
 }
 
-// CrawlDomain uses raw HTTP capture. We pass the headers & status code to snapshot.StoreOrUpdateSnapshot.
 func CrawlDomain(startURL string, db store.DBInterface, cfg CrawlerConfig) error {
 	parsed, err := url.Parse(startURL)
 	if err != nil {
@@ -57,13 +56,11 @@ func CrawlDomain(startURL string, db store.DBInterface, cfg CrawlerConfig) error
 			return
 		}
 
-		// Store or update snapshot in DB with new data
 		snapErr := snapshot.StoreOrUpdateSnapshot(db, u, htmlContent, statusCode, reqHeaders, respHeaders)
 		if snapErr != nil {
 			fmt.Printf("[ERROR] storing snapshot for %s: %v\n", u, snapErr)
 		}
 
-		// extract same-domain links
 		links, parseErr := extractSameDomainLinks(htmlContent, baseDomain, u)
 		if parseErr != nil {
 			fmt.Printf("[ERROR] parsing links for %s: %v\n", u, parseErr)
